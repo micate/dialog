@@ -8,20 +8,62 @@
     <script src="js/dialog.js"></script>
     <script>
         $(function() {
-            dialog.ok({title:'新提示', message:'hello, worldddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />'}, function() {
-                dialog.ok('callback');
+            //dialog.setup({width:600/*, height:400*/});
+            //dialog.setup({shadow:false/*, height:400*/});
+
+            /*dialog.ok({title:'新提示', message:'hello, worldddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />'}, function() {
+                dialog.tips('callback');
             });
 
             dialog.confirm('确定要刷新页面吗？', function() {
-                dialog.ok('Yes Clicked!');
+                dialog.tips('Yes Clicked!');
             }, function() {
                 dialog.error('No Clicked!');
+            });*/
+
+            // submit, load, error, beforeSubmit, beforeSerialize, close
+            /*dialog.form('form demo', '/html/form.php', function(json) {
+                dialog.tips('form submit');
+                console.info(json);
+            }, function() {
+                dialog.tips('form load');
+            }, function() {
+                dialog.error('form error');
+            }, function() {
+                dialog.tips('form beforeSubmit');
+            }, function(beforeSerialize) {
+                dialog.tips('form beforeSerialize');
+            }, function() {
+                dialog.tips('form close');
+            });*/
+
+            /*dialog.tips('Tips Test', -1, function() {
+                dialog.ok('tips close');
+            });*/
+
+            //dialog.show('<img src="http://cn.bing.com/fd/hpk2/TheEx_ZH-CN1218152540.jpg" width="500" />');
+            dialog.show('/html/iframe.html', undefined, undefined, function() {
+                dialog.ok('iframe.html close');
+            });
+            dialog.show({
+                title: '百度',
+                url: 'http://www.baidu.com',
+                width:1000
             });
         });
     </script>
 </head>
-<body style="background:#000; color:#FFF; font-size:50em;">
+<body style="background:#000; color:#FFF; font-size:20em; text-align:center;">
     <div>
+        h
+        <select>
+            <option>hello</option>
+            <option>hello</option>
+            <option>hello</option>
+            <option>hello</option>
+            <option>hello</option>
+            <option>hello</option>
+        </select>
         hello, world
     </div>
 </body>
