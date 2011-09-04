@@ -159,9 +159,6 @@ var LOCALES = {
 function prop(n) {
     return n && n.constructor === Number ? n + 'px' : n;
 }
-function floatval(val) {
-    return val && parseFloat((val + '').replace(/[^\d]*/, '')) || 0;
-}
 function isFunction(func, context) {
     if (!func) {
         return false;
