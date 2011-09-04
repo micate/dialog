@@ -1,7 +1,7 @@
 /**
- * Dialog for common usage
+ * a douban.com like jQuery dialog for common usage
  *
- * @author		micate
+ * @author		micate<root@micate.me>
  * @version		$Id$
  * @depends     jquery 1.3.2+
  * @knownbugs   1. 全平台 iframe 的高度不正确
