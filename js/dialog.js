@@ -1,3 +1,14 @@
+/**
+ * Dialog for common usage
+ *
+ * @author		micate
+ * @version		$Id$
+ * @depends     jquery 1.3.2+
+ * @knownbugs   1. 全平台 iframe 的高度不正确
+ *              2. IE8/7 动态加载 form 后的高度计算不正确
+ *              3. IE6 未测试（按钮、高度、滚动）
+ *              4. 不支持拖动
+ */
 (function($, window, undefined) {
 
 var LOCALES = {
@@ -15,7 +26,7 @@ var LOCALES = {
             CLOSE: 'Close',
             TIPS: 'Tips',
             LOADING: 'loading...',
-            ERROR: 'Operation failed, please try again.'
+            ERROR: 'Oops, operation failed, please try again.'
         }
     },
     getLocale = function(config) {
@@ -32,7 +43,7 @@ var LOCALES = {
         shadow: true,
         iframe: true,
         minWidth: 200,
-        minHeight: 90,
+        minHeight: 60,
         dialogClass: ''
     },
     CLASS = {
@@ -46,14 +57,14 @@ var LOCALES = {
         title: 'dialog-title',
         close: 'dialog-close',
         content: 'dialog-content',
-        content_inner: 'dialog-content-inner',
+        content_box: 'dialog-content-box',
+        content_tips: 'dialog-content-tips',
         footer: 'dialog-footer',
         widget: 'dialog-widget',
         buttons: 'dialog-buttons',
         button: 'dialog-button',
         button_hover: 'dialog-button-over',
-        button_focus: 'dialog-button-active',
-        tips: 'dialog-tips'
+        button_focus: 'dialog-button-active'
     },
     GUID = 0,
     PREFIX = 'dialog_',
@@ -61,10 +72,15 @@ var LOCALES = {
     OPACITY = 0.8,
     SHADOW_OPACITY = 0.2,
     UNIT_PX = 'px',
+    ATTR_AUTO = 'auto',
+    TYPE_FUNCTION = 'function',
+    TYPE_STRING = 'string',
     BLANK_SRC = 'about:blank',
 
     SHADOW_PADDING = 10,
     BOX_BORDER_WIDTH = 1,
+    DURATION_DEFAULT = 2500,
+    DURATION_KEEP = -1,
 
     doc = document,
     doe = doc.documentElement,
@@ -74,20 +90,20 @@ var LOCALES = {
 
 !$.fn.bgiframe && ($.fn.bgiframe = ($.browser.msie && /msie 6\.0/i.test(navigator.userAgent) ? function(s) {
     s = $.extend({
-        top : 'auto',
-        left : 'auto',
-        width : 'auto',
-        height : 'auto',
+        top : ATTR_AUTO,
+        left : ATTR_AUTO,
+        width : ATTR_AUTO,
+        height : ATTR_AUTO,
         opacity : true,
         src : BLANK_SRC
     }, s);
     var html = '<iframe class="bgiframe" frameborder="0" tabindex="-1" src="'+s.src+'"'+
                    'style="display:block;position:absolute;z-index:-1;'+
                        (s.opacity !== false?'filter:Alpha(Opacity=\'0\');':'')+
-                       'top:'+(s.top=='auto'?'expression(((parseInt(this.parentNode.currentStyle.borderTopWidth)||0)*-1)+\'px\')':prop(s.top))+';'+
-                       'left:'+(s.left=='auto'?'expression(((parseInt(this.parentNode.currentStyle.borderLeftWidth)||0)*-1)+\'px\')':prop(s.left))+';'+
-                       'width:'+(s.width=='auto'?'expression(this.parentNode.offsetWidth+\'px\')':prop(s.width))+';'+
-                       'height:'+(s.height=='auto'?'expression(this.parentNode.offsetHeight+\'px\')':prop(s.height))+';'+
+                       'top:'+(s.top==ATTR_AUTO?'expression(((parseInt(this.parentNode.currentStyle.borderTopWidth)||0)*-1)+\'px\')':prop(s.top))+';'+
+                       'left:'+(s.left==ATTR_AUTO?'expression(((parseInt(this.parentNode.currentStyle.borderLeftWidth)||0)*-1)+\'px\')':prop(s.left))+';'+
+                       'width:'+(s.width==ATTR_AUTO?'expression(this.parentNode.offsetWidth+\'px\')':prop(s.width))+';'+
+                       'height:'+(s.height==ATTR_AUTO?'expression(this.parentNode.offsetHeight+\'px\')':prop(s.height))+';'+
                 '"/>';
     return this.each(function() {
         if ( $(this).children('iframe.bgiframe').length === 0 )
@@ -98,8 +114,8 @@ var LOCALES = {
     var url, data;
 
     if (!this.length) return this;
-    if (typeof options == 'function') {
-        options = {success:options};
+    if (typeof options == TYPE_FUNCTION) {
+        options = {success: options};
     }
 
     url = $.trim(this.attr('action'));
@@ -109,7 +125,7 @@ var LOCALES = {
     url = url || window.location.href || '';
 
     options = $.extend({
-        url:  url,
+        url: url,
         type: this.attr('method') || 'GET'
     }, options || {});
 
@@ -143,14 +159,17 @@ var LOCALES = {
 function prop(n) {
     return n && n.constructor === Number ? n + 'px' : n;
 }
+function floatval(val) {
+    return val && parseFloat((val + '').replace(/[^\d]*/, '')) || 0;
+}
 function isFunction(func, context) {
     if (!func) {
         return false;
     }
-    if (typeof func == 'function') {
+    if (typeof func == TYPE_FUNCTION) {
         return func;
     }
-    if (typeof func == 'string') {
+    if (typeof func == TYPE_STRING) {
         func = func.split('.');
         var o = (context || window)[func[0]], w = null;
         if (!o) return undefined;
@@ -168,9 +187,9 @@ function isFunction(func, context) {
     return null;
 }
 function createIframe(src, width, height) {
-    width = width ? width + UNIT_PX : 'auto';
-    height = height ? height + UNIT_PX : 'auto';
-    return $(['<iframe src="', src || BLANK_SRC, '" style="overflow:hidden; width:', width, '; height:', height, '; border:0; margin:0; padding:0;"></iframe>'].join(''));
+    width = width ? width + UNIT_PX : ATTR_AUTO;
+    height = height ? max(0, height - 4) + UNIT_PX : ATTR_AUTO;
+    return $(['<iframe src="', src || BLANK_SRC, '" frameborder="0" scrolling="auto" style="width:', width, '; height:', height, '; border:0; margin:0; padding:0;"></iframe>'].join(''));
 }
 function createOverlay(options, clazz) {
     var overlay =  $(['<div id="', PREFIX, 'overlay_', GUID, '" class="', clazz.overlay, '"></div>'].join(''));
@@ -183,18 +202,24 @@ function createShadow(options, clazz) {
     return shadow;
 }
 function createBox(options, clazz) {
-    var box = $([
-        '<div id="', PREFIX, 'box_', GUID, '" class="', clazz.box, options.dialogClass ? ' ' + options.dialogClass : '', '">',
-            '<div class="', clazz.header, '"><a href="javascript:void(0);" title="', LANG.CLOSE, '" class="', clazz.close, '">X</a><span class="', clazz.title, '">', options.title, '</span></div>',
-            '<div class="', clazz.content, '"><div class="', clazz.content_inner, '">', options.message && !options.message.jquery ? options.message : '', '</div></div>',
-            '<div class="', clazz.footer, '">',
-                '<div class="', clazz.widget, '"></div>',
-                '<div class="', clazz.buttons, '"></div>',
-            '</div>',
-        '</div>'
-    ].join(''));
+    var message = options.message,
+        content,
+        box = $([
+            '<div id="', PREFIX, 'box_', GUID, '" class="', clazz.box, options.dialogClass ? ' ' + options.dialogClass : '', '">',
+                '<div class="', clazz.header, '"><a href="javascript:void(0);" hideFocus="true" title="', LANG.CLOSE, '" class="', clazz.close, '">X</a><span class="', clazz.title, '">', options.title, '</span></div>',
+                '<div class="', clazz.content, '"><div class="', clazz.content_box, '">', message && !message.jquery ? message : '', '</div></div>',
+                '<div class="', clazz.footer, '">',
+                    '<div class="', clazz.widget, '"></div>',
+                    '<div class="', clazz.buttons, '"></div>',
+                '</div>',
+            '</div>'
+        ].join(''));
     box.css({'z-index': ZINDEX});
-    options.message && options.message.jquery && (box.find('.' + clazz.content_inner).append(options.message));
+    if (message && message.jquery) {
+        content = box.find('.' + clazz.content);
+        content.empty();
+        content.append(message);
+    }
     return box;
 }
 function createButton(option, clazz) {
@@ -213,7 +238,7 @@ function createButton(option, clazz) {
     return button;
 }
 function createTips(option, clazz) {
-    return $(['<div class="', clazz.tips, '">', option.message, '</div>'].join(''));
+    return $(['<div class="', clazz.content_box, ' ', clazz.content_tips, '">', option.message, '</div>'].join(''));
 }
 
 window.dialog = {
@@ -223,7 +248,7 @@ window.dialog = {
         if (!options) {
             throw 'dialog need message or callback';
         }
-        if (options.jquery || typeof options == 'string') {
+        if (options.jquery || typeof options == TYPE_STRING) {
             options = {
                 'message': options
             };
@@ -285,10 +310,10 @@ window.dialog = {
     tips: function(options, duration, close) {
         var self = this, guid;
 
-        if (typeof options == 'function') {
+        if (typeof options == TYPE_FUNCTION) {
             close = options;
             options = {};
-        } else if (typeof duration == 'function') {
+        } else if (typeof duration == TYPE_FUNCTION) {
             close = duration;
         }
 
@@ -297,8 +322,8 @@ window.dialog = {
 
         guid = this.dialog(options, undefined, close);
 
-        !duration && (duration = 2500);
-        duration != -1 && (setTimeout(function() {
+        !duration && (duration = DURATION_DEFAULT);
+        duration != DURATION_KEEP && (setTimeout(function() {
             self.close(guid);
         }, duration));
     },
@@ -308,7 +333,7 @@ window.dialog = {
         if (!options) {
             throw 'dialog.form need title';
         }
-        if (typeof options == 'string') {
+        if (typeof options == TYPE_STRING) {
             options = {
                 'title': options
             };
@@ -335,18 +360,18 @@ window.dialog = {
 
                     if (form.size()) {
                         form.ajaxSubmit({
-                            dataType:'json',
-                            type:'post',
-                            success:callback,
-                            error:function(XMLHttpRequest, textStatus, errorThrown) {
+                            dataType: 'json',
+                            type: 'post',
+                            success: callback,
+                            error: function(XMLHttpRequest, textStatus, errorThrown) {
                                 if (isFunction(error)) {
                                     error(XMLHttpRequest, textStatus, errorThrown);
                                 } else {
                                     self.error(options.errorMessage);
                                 }
                             },
-                            complete:complete,
-                            beforeSubmit:function() {
+                            complete: complete,
+                            beforeSubmit: function() {
                                 buttons.attr('disabled', 'disabled');
                                 if (isFunction(beforeSubmit) && beforeSubmit(form, guid) === false) {
                                     complete();
@@ -354,7 +379,7 @@ window.dialog = {
                                 }
                                 return true;
                             },
-                            beforeSerialize:beforeSerialize
+                            beforeSerialize: beforeSerialize
                         });
                         return false;
                     }
@@ -391,7 +416,7 @@ window.dialog = {
             return this.ok(options, callback, cancel);
         }
 
-        if (typeof options == 'function') {
+        if (typeof options == TYPE_FUNCTION) {
             throw 'dialog.show need options';
         }
 
@@ -431,10 +456,13 @@ window.dialog = {
                     self.resize(guid);
                 }
 
+                callback && (win.dialogCallback = callback);
                 !options.title && doc.title && doc.title.length && (self.get(guid).find('.' + clazz.title).html(doc.title));
             } catch (e) {
                 self.get(guid).find('.' + clazz.title).html(options.title || iframe.attr('src'));
             }
+
+            isFunction(load) && load(guid, iframe);
         });
 
         return guid;
@@ -448,7 +476,7 @@ window.dialog = {
             if (isFunction(options)) {
                 open = options;
                 options = {};
-            } else if (typeof options == 'string') {
+            } else if (typeof options == TYPE_STRING) {
                 options = {
                     title: options
                 };
@@ -504,7 +532,7 @@ window.dialog = {
         });
         setTimeout(function() {
             self.resize(guid);
-        }, 500);
+        }, 50);
 
         isFunction(open) && open(box);
         isFunction(close) && box.data('close', close);
@@ -544,88 +572,85 @@ window.dialog = {
     },
     resize: function(guid) {
         var box = this.get(guid), options = box.data('options'),
-            overlay, shadow, content,
-            width, height, awidth, aheight, osize,
-            title_height, footer_height,
+            overlay, shadow, content, isVisible,
+            width, height, osize, cheight, noneContentHeight, minContentHeight, autoHeight,
             documentWidth = doe.clientWidth,
             documentHeight = doe.clientHeight,
             pageWidth = $(doc).width(),
             pageHeight = max($(doc).height(), documentHeight);
 
-        // 未找到容器
         if (!box.size() || box.data('resizing')) {
             return false;
         }
+
         box.data('resizing', true);
 
-        // 如果有遮罩层，设置遮罩层
-        if (box.data('overlay')) {
-            overlay = this.getOverlay(guid);
-            overlay.css({
-                width: pageWidth,
-                height: pageHeight
-            });
-        }
-
-        // 找到内容区域
+        isVisible = box.is(':visible');
+        osize = 2 * SHADOW_PADDING + 2 * BOX_BORDER_WIDTH;
+        cheight = box.find('.' + CLASS.header).outerHeight(true) + box.find('.' + CLASS.footer).outerHeight(true);
         content = box.find('.' + CLASS.content);
 
-        // 获取标题和按钮区域的高度
-        title_height = box.find('.' + CLASS.header).outerHeight(true);
-        footer_height = box.find('.' + CLASS.footer).outerHeight(true);
-
-        // 重设大小
         content.css({
             width: 'auto',
-            height:'auto'
-        });
-        box.css({
-            width: 'auto',
-            height: 'auto'
+            minHeight: 0,
+            height: 0
         });
 
-        // 阴影和边框大小
-        osize = 2 * SHADOW_PADDING + 2 * BOX_BORDER_WIDTH;
+        if (options.minWidth > options.width) {
+            options.width = options.minWidth;
+        }
 
-        width = box.width();
-        awidth = documentWidth - osize;
-        width = max(awidth < width ? awidth : width, options.minWidth);
-        options.width && (width = min(width, options.width));
-        // TODO IE6 / IE7 下的兼容性问题
-        /*width = min(width, 550);*/
+        noneContentHeight = box.css({
+            height: 'auto',
+            width: options.width
+        }).height();
+        minContentHeight = max(0, options.minHeight - noneContentHeight);
+        if (options.height === 'auto' || !options.height) {
+			if ($.support.minHeight) {
+				content.css({
+					minHeight: minContentHeight,
+					height: 'auto'
+				});
+			} else {
+				box.show();
+				autoHeight = content.css('height', 'auto').height();
+				!isVisible && box.hide();
+				content.height(max(autoHeight, minContentHeight));
+			}
+		} else {
+			content.height(max(options.height - noneContentHeight, 0));
+		}
 
-        box.data('shadow') && this.getShadow(guid).css({
-            width: width + osize,
-            left: '50%',
-            'margin-left': Math.floor(width / 2) * -1 - SHADOW_PADDING
+        width = content.width();
+        height = content.height();
+
+        if (width < options.minWidth) {
+            width = options.minWidth;
+            content.width(width);
+        }
+        
+        height += cheight;
+
+        box.data('overlay') && this.getOverlay(guid).css({
+            width: pageWidth,
+            height: pageHeight
         });
         box.css({
             width: width,
-            left: '50%',
-            'margin-left': Math.floor(width / 2) * -1
-        });
-        content.css({
-            width: width
-        });
-
-        height = box.height();
-        aheight = documentHeight - osize;
-        height = max(aheight < height ? aheight : height, options.minHeight);
-        options.height && (height = min(height, options.height));
-
-        box.data('shadow') && this.getShadow(guid).css({
-            height: height + osize,
-            top: max(0, Math.floor(max(documentHeight - height, 0) / 2) - SHADOW_PADDING)
-        });
-        box.css({
             height: height,
+            left: '50%',
+            'margin-left': Math.floor(width / 2) * -1,
             top: max(SHADOW_PADDING, Math.floor(max(documentHeight - height, 0) / 2))
         });
-        content.css({
-            height: height - title_height - footer_height
+        box.data('shadow') && this.getShadow(guid).css({
+            width: width + osize,
+            height: height + osize,
+            left: '50%',
+            'margin-left': Math.floor(width / 2) * -1 - SHADOW_PADDING,
+            top: max(0, Math.floor(max(documentHeight - height, 0) / 2) - SHADOW_PADDING)
         });
-
         box.data('resizing', false);
+        
         return true;
     }
 };
