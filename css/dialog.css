@@ -4,6 +4,7 @@
 .dialog-shadow {background:#333; border-radius:6px; overflow:hidden;}
 
 .dialog-box {background:#FFF; border:1px solid #BBB; font-size:14px; font-style:normal; font-weight:normal; text-align:left;}
+/*.dialog-box .clearfix {clear:both; width:0; height:0; margin:0; padding:0;}*/
 .dialog-box .dialog-header {padding-left:10px; padding-right:10px; font:14px/150% Arial,Helvetica,sans-serif;}
 .dialog-box .dialog-header, .dialog-box .dialog-footer {background:#EBF5EA;}
 .dialog-box .dialog-header {color:#006600; line-height:1.2; padding-top:12px; padding-bottom:12px;}

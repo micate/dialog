@@ -11,9 +11,9 @@
             //dialog.setup({width:600/*, height:400*/});
             //dialog.setup({shadow:false/*, height:400*/});
 
-            dialog.ok({title:'新提示', message:'hello, worldddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />'}, function() {
+            /*dialog.ok({title:'新提示', message:'hello, worldddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />'}, function() {
                 dialog.tips('callback');
-            });
+            });*/
 
             dialog.confirm('确定要刷新页面吗？', function() {
                 dialog.tips('Yes Clicked!');
@@ -22,9 +22,9 @@
             });
 
             // submit, load, error, beforeSubmit, beforeSerialize, close
-            dialog.form('form demo', '/html/form.php', function(json) {
+            /*dialog.form('form demo', '/html/form.php', function(json) {
                 dialog.tips('form submit');
-                console.info(json);
+                //console.info(json);
             }, function() {
                 dialog.tips('form load');
             }, function() {
@@ -35,14 +35,26 @@
                 dialog.tips('form beforeSerialize');
             }, function() {
                 dialog.tips('form close');
-            });
+            });*/
 
-            dialog.tips('Tips Test', -1, function() {
-                dialog.ok('tips close');
-            });
+            dialog.button({
+                title: '添加成功',
+                message: '<a href="http://www.baidu.com/" target="_blank">http://www.baidu.com/</a>'
+            }, [{
+                text: '确定',
+                callback: function() {
+                    dialog.tips('hello, world');
+                    return false; // prevent close button dialog(default is close)
+                }
+            }, {
+                text: '取消',
+                callback: function() {
+                    dialog.tips('Orz...');
+                }
+            }]);
 
             //dialog.show('<img src="http://cn.bing.com/fd/hpk2/TheEx_ZH-CN1218152540.jpg" width="500" />');
-            dialog.show({
+            /*dialog.show({
                 title: '测试',
                 url: '/html/iframe.html',
                 width:400,
@@ -55,11 +67,11 @@
                 url: 'http://www.baidu.com',
                 width:800,
                 height:500
-            });
+            });*/
         });
     </script>
 </head>
-<body style="background:#000; color:#FFF; font-size:20em; text-align:center;">
+<body style="background:#FFF; color:#000; font-size:20em; text-align:center;">
     <div>
         h
         <select>

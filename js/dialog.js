@@ -1,8 +1,8 @@
 /**
  * a douban.com like jQuery dialog for common usage
  *
- * @author		micate<root@micate.me>
- * @version		$Id$
+ * @author	micate<root@micate.me>
+ * @version	$Id$
  * @depends     jquery 1.3.2+
  * @knownbugs   1. 全平台 iframe 的高度不正确
  *              2. IE8/7 动态加载 form 后的高度计算不正确
@@ -84,6 +84,10 @@ var LOCALES = {
 
     doc = document,
     doe = doc.documentElement,
+    documentWidth,
+    documentHeight,
+    pageWidth,
+    pageHeight,
 
     max = Math.max,
     min = Math.min;
@@ -234,8 +238,16 @@ function createButton(option, clazz) {
     });
     return button;
 }
-function createTips(option, clazz) {
-    return $(['<div class="', clazz.content_box, ' ', clazz.content_tips, '">', option.message, '</div>'].join(''));
+function createTips(options, clazz) {
+    var message = options.message,
+        tips;
+    tips = $(['<div class="', clazz.content_tips, '">', message && !message.jquery ? message : '', '</div>'].join(''));
+    if (message && message.jquery) {
+        tips.empty().append(message);
+    } else {
+        tips.addClass(clazz.content_box);
+    }
+    return tips;
 }
 
 window.dialog = {
@@ -314,7 +326,9 @@ window.dialog = {
             close = duration;
         }
 
-        options = $.extend({}, this._options, this._common(options));
+        options = this._common(options);
+        options && !options.overlay && (options.overlay = false);
+        options = $.extend({}, this._options, options);
         options.message = createTips(options, this._clazz);
 
         guid = this.dialog(options, undefined, close);
@@ -323,6 +337,41 @@ window.dialog = {
         duration != DURATION_KEEP && (setTimeout(function() {
             self.close(guid);
         }, duration));
+
+        return guid;
+    },
+    button: function(options, buttons) {
+        var self = this, clazz = this._clazz, guid, content, btns, button, index, length;
+        options = this._common(options);
+
+        if (!buttons || !buttons.length) {
+            throw 'dialg.button needs buttons';
+        }
+
+        content = $('<div></div>');
+        options.message && content.append(options.message.jquery ? options.message : $('<p>' + options.message + '</p>'));
+
+        btns = $('<p></p>');
+        length = buttons.length;
+        for (index = 0; index < length; index++) {
+            (function(button) {
+                var text = button.text, callback = button.callback;
+                button = createButton(button, clazz);
+                button.click(function() {
+                    if (isFunction(callback) && callback() === false) {
+                        return false;
+                    }
+                    self.close(guid);
+                });
+                button.css('float', 'none');
+                btns.append(button);
+            })(buttons[index]);
+        }
+        content.append(btns).append('<div class="clearfix"></div>');
+        options.message = content;
+
+        guid = this.tips(options, DURATION_KEEP);
+        return guid;
     },
     form: function(options, url, submit, load, error, beforeSubmit, beforeSerialize, cancel) {
         var self = this, div, guid;
@@ -405,6 +454,8 @@ window.dialog = {
         guid = this.dialog(options, function(box) {
             box.find('.' + self._clazz.buttons + ' :button').attr('disabled', 'disabled');
         }, cancel);
+
+        return guid;
     },
     show: function(options, callback, load, cancel) {
         var self = this, clazz = this._clazz, guid, iframe;
@@ -531,6 +582,8 @@ window.dialog = {
             self.resize(guid);
         }, 50);
 
+        this.dragable(guid);
+
         isFunction(open) && open(box);
         isFunction(close) && box.data('close', close);
         box.find('.' + clazz.close).click(function() {
@@ -564,17 +617,20 @@ window.dialog = {
         if (box.data('shadow')) {
             this.getShadow(guid).remove();
         }
-        box.remove();
+        setTimeout(function() {
+            box.remove();
+        }, 50);
         return true;
     },
     resize: function(guid) {
         var box = this.get(guid), options = box.data('options'),
             overlay, shadow, content, isVisible,
-            width, height, osize, cheight, noneContentHeight, minContentHeight, autoHeight,
-            documentWidth = doe.clientWidth,
-            documentHeight = doe.clientHeight,
-            pageWidth = $(doc).width(),
-            pageHeight = max($(doc).height(), documentHeight);
+            width, height, osize, cheight, noneContentHeight, minContentHeight, autoHeight;
+
+        documentWidth = doe.clientWidth,
+        documentHeight = doe.clientHeight,
+        pageWidth = $(doc).width(),
+        pageHeight = max($(doc).height(), documentHeight);
 
         if (!box.size() || box.data('resizing')) {
             return false;
@@ -635,20 +691,77 @@ window.dialog = {
         box.css({
             width: width,
             height: height,
-            left: '50%',
-            'margin-left': Math.floor(width / 2) * -1,
+            left: max(SHADOW_PADDING, Math.floor((documentWidth - width) / 2)),
             top: max(SHADOW_PADDING, Math.floor(max(documentHeight - height, 0) / 2))
         });
         box.data('shadow') && this.getShadow(guid).css({
             width: width + osize,
             height: height + osize,
-            left: '50%',
-            'margin-left': Math.floor(width / 2) * -1 - SHADOW_PADDING,
-            top: max(0, Math.floor(max(documentHeight - height, 0) / 2) - SHADOW_PADDING)
+            left: max(0, Math.floor((documentWidth - width) / 2 - SHADOW_PADDING)),
+            top: max(0, Math.floor(max(documentHeight - height, 0) / 2 - SHADOW_PADDING))
         });
         box.data('resizing', false);
         
         return true;
+    },
+    dragable: function(guid) {
+        var self = this, box = this.get(guid),
+            header = box.find('.' + this._clazz.header),
+            xOffset = SHADOW_PADDING + BOX_BORDER_WIDTH,
+            yOffset = xOffset;
+
+        function fixFastMove(e) {
+            var box = $('.' + 'dialog-moving'), data, left, top;
+            if (box.size()) {
+                data = box.data('dialog-moving');
+                left = data.startLeft + e.clientX - data.startX;
+                top = data.startTop + e.clientY - data.startY;
+                left = max(0, min(pageWidth - data.elem.width(), left));
+                top = max(0, min(pageHeight - data.elem.height(), top));
+                data.shadow && (data.shadow.css({left: left, top: top}), left += xOffset, top += yOffset);
+                box.css({left: left, top: top});
+            }
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        (function(box, header) {
+            var draging = false,
+                startLeft, startTop, startX, startY,
+                shadow = self.getShadow(guid), elem = shadow.size() ? shadow : box;
+            header.bind('mousedown.dragment', function(e) {
+                draging && header.trigger('mouseup.dragment');
+                draging = true;
+                var offset = elem.position();
+                startLeft = offset.left;
+                startTop = offset.top;
+                startX = e.pageX;
+                startY = e.pageY;
+                box.addClass('dialog-moving');
+                box.data('dialog-moving', {
+                    startLeft: startLeft, startTop: startTop, startX: startX, startY: startY, elem: elem, shadow: shadow
+                });
+                $(doc).bind('mousemove.dragment', fixFastMove).bind('selectstart.dragment', function() {return false;});
+                $(doc.body).css('-moz-user-select', 'none');
+            });
+            header.bind('mousemove.dragment', function(e) {
+                if (!draging) return false;
+                var left = startLeft + e.clientX - startX, top = startTop + e.clientY - startY;
+                left = max(0, min(pageWidth - elem.width(), left));
+                top = max(0, min(pageHeight - elem.height(), top));
+                shadow.size() && (shadow.css({left: left, top: top}), left += xOffset, top += yOffset);
+                box.css({left: left, top: top});
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            header.bind('mouseup.dragment', function() {
+                box.removeClass('dialog-moving');
+                box.removeData('dialog-moving');
+                $.event.remove('.dragment');
+                $(doc.body).css('-moz-user-select', '');
+                draging = false;
+            }).css('cursor', 'move');
+        })(box, header);
     }
 };
 })(jQuery, window);
