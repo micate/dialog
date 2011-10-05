@@ -355,7 +355,7 @@ window.dialog = {
         length = buttons.length;
         for (index = 0; index < length; index++) {
             (function(button) {
-                var text = button.text, callback = button.callback;
+                var callback = button.callback;
                 button = createButton(button, clazz);
                 button.click(function() {
                     if (isFunction(callback) && callback() === false) {
@@ -746,13 +746,12 @@ window.dialog = {
             });
             header.bind('mousemove.dragment', function(e) {
                 if (!draging) return false;
-                var left = startLeft + e.clientX - startX, top = startTop + e.clientY - startY;
+                var left = startLeft + e.pageX - startX, top = startTop + e.pageY - startY;
                 left = max(0, min(pageWidth - elem.width(), left));
                 top = max(0, min(pageHeight - elem.height(), top));
                 shadow.size() && (shadow.css({left: left, top: top}), left += xOffset, top += yOffset);
                 box.css({left: left, top: top});
                 e.preventDefault();
-                e.stopPropagation();
             });
             header.bind('mouseup.dragment', function() {
                 box.removeClass('dialog-moving');
