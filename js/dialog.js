@@ -259,7 +259,7 @@ window.dialog = {
         }
         if (options.jquery || typeof options == TYPE_STRING) {
             options = {
-                'message': options
+                message: options
             };
         }
         return options;
@@ -341,37 +341,19 @@ window.dialog = {
         return guid;
     },
     button: function(options, buttons) {
-        var self = this, clazz = this._clazz, guid, content, btns, button, index, length;
+        var self = this, index, length;
         options = this._common(options);
 
         if (!buttons || !buttons.length) {
             throw 'dialg.button needs buttons';
         }
 
-        content = $('<div></div>');
-        options.message && content.append(options.message.jquery ? options.message : $('<p>' + options.message + '</p>'));
-
-        btns = $('<p></p>');
-        length = buttons.length;
-        for (index = 0; index < length; index++) {
-            (function(button) {
-                var callback = button.callback;
-                button = createButton(button, clazz);
-                button.click(function() {
-                    if (isFunction(callback) && callback() === false) {
-                        return false;
-                    }
-                    self.close(guid);
-                });
-                button.css('float', 'none');
-                btns.append(button);
-            })(buttons[index]);
+        options.buttons = [];
+        for (index = 0, length = buttons.length; index < length; index++) {
+            options.buttons.push(self._button(buttons[index].text, buttons[index].callback));
         }
-        content.append(btns).append('<div class="clearfix"></div>');
-        options.message = content;
-
-        guid = this.tips(options, DURATION_KEEP);
-        return guid;
+        
+        return this.dialog(options, buttons[0].func, buttons[length - 1].callback);
     },
     form: function(options, url, submit, load, error, beforeSubmit, beforeSerialize, cancel) {
         var self = this, div, guid;
@@ -381,7 +363,7 @@ window.dialog = {
         }
         if (typeof options == TYPE_STRING) {
             options = {
-                'title': options
+                title: options
             };
         }
 
