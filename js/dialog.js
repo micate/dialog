@@ -353,7 +353,7 @@ window.dialog = {
             options.buttons.push(self._button(buttons[index].text, buttons[index].callback));
         }
         
-        return this.dialog(options, buttons[0].func, buttons[length - 1].callback);
+        return this.dialog(options, undefined, buttons[length - 1].callback);
     },
     form: function(options, url, submit, load, error, beforeSubmit, beforeSerialize, cancel) {
         var self = this, div, guid;
