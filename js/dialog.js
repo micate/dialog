@@ -3,38 +3,17 @@
  *
  * @author	micate<root@micate.me>
  * @version	$Id$
- * @depends     jquery 1.3.2+
- * @knownbugs   1. 全平台 iframe 的高度不正确
- *              2. IE8/7 动态加载 form 后的高度计算不正确
- *              3. IE6 未测试（按钮、高度、滚动）
- *              4. 不支持拖动
+ * @depends jquery 1.3.2+
  */
 (function($, window, undefined) {
-
-var LOCALES = {
-        'zh-cn': {
-            OK: '确定',
-            CANCEL: '取消',
-            CLOSE: '关闭',
-            TIPS: '提示',
-            LOADING: '加载中...',
-            ERROR: '呃，没有成功，请重试'
-        },
-        'en-us': {
-            OK: 'OK',
-            CANCEL: 'Canel',
-            CLOSE: 'Close',
-            TIPS: 'Tips',
-            LOADING: 'loading...',
-            ERROR: 'Oops, operation failed, please try again.'
-        }
+var LANG = {
+        OK: '确定',
+        CANCEL: '取消',
+        CLOSE: '关闭',
+        TIPS: '提示',
+        LOADING: '加载中...',
+        ERROR: '呃，没有成功，请重试'
     },
-    getLocale = function(config) {
-        var ng = navigator,
-            locale = (config || ng.language || ng.userLanguage || ng.browserLanguage || navigator.systemLanguage).toLowerCase();
-        return LOCALES[locale] || LOCALES['zh-cn'];
-    },
-    LANG = getLocale(),
     CONFIG = {
         title: LANG.TIPS,
         message: LANG.LOADING,
@@ -81,6 +60,8 @@ var LOCALES = {
     BOX_BORDER_WIDTH = 1,
     DURATION_DEFAULT = 2500,
     DURATION_KEEP = -1,
+
+    msie6 = $.browser.msie && $.browser.version == 6,
 
     doc = document,
     doe = doc.documentElement,
@@ -187,10 +168,8 @@ function isFunction(func, context) {
     }
     return null;
 }
-function createIframe(src, width, height) {
-    width = width ? width + UNIT_PX : ATTR_AUTO;
-    height = height ? max(0, height - 4) + UNIT_PX : ATTR_AUTO;
-    return $(['<iframe src="', src || BLANK_SRC, '" frameborder="0" scrolling="auto" style="width:', width, '; height:', height, '; border:0; margin:0; padding:0;"></iframe>'].join(''));
+function createIframe(src) {
+    return $(['<iframe src="', src || BLANK_SRC, '" frameborder="0" scrolling="no" style="width:100%; height:100%; border:0; margin:0; padding:0;"></iframe>'].join(''));
 }
 function createOverlay(options, clazz) {
     var overlay =  $(['<div id="', PREFIX, 'overlay_', GUID, '" class="', clazz.overlay, '"></div>'].join(''));
@@ -251,7 +230,6 @@ function createTips(options, clazz) {
 }
 
 window.dialog = {
-    _options: CONFIG,
     _clazz: CLASS,
     _common: function(options) {
         if (!options) {
@@ -276,11 +254,10 @@ window.dialog = {
             }
         };
     },
-    setup: function(options, clazz, locale) {
-        $.extend(this._options, options || {});
+    setup: function(options, clazz) {
+        $.extend(CONFIG, options || {});
         $.extend(this._clazz, clazz || {});
-        $.extend(LOCALES, locale || {});
-        options.locale && (LANG = getLocale(options.locale));
+        options.locale && (LANG = options.locale);
         return this;
     },
     ok: function(options, ok, close) {
@@ -324,11 +301,12 @@ window.dialog = {
             options = {};
         } else if (typeof duration == TYPE_FUNCTION) {
             close = duration;
+            duration = undefined;
         }
 
         options = this._common(options);
         options && !options.overlay && (options.overlay = false);
-        options = $.extend({}, this._options, options);
+        options = $.extend({}, CONFIG, options);
         options.message = createTips(options, this._clazz);
 
         guid = this.dialog(options, undefined, close);
@@ -450,8 +428,8 @@ window.dialog = {
             throw 'dialog.show need options';
         }
 
-        options = $.extend({}, this._options, this._common(options));
-        iframe = createIframe(options.url || options.message, options.width, options.height);
+        options = $.extend({}, CONFIG, this._common(options));
+        iframe = createIframe(options.url || options.message);
 
         options.message = iframe;
         guid = this.dialog(options, load, cancel);
@@ -512,7 +490,7 @@ window.dialog = {
                 };
             }
         }
-        options = $.extend({}, this._options, options);
+        options = $.extend({}, CONFIG, options);
 
         guid = ++GUID;
         ZINDEX++;
@@ -543,7 +521,7 @@ window.dialog = {
                         button = createButton(option, clazz);
                         if (isFunction(option.callback)) {
                             button.click(function() {
-                                option.callback(guid);
+                                option.callback(guid, box);
                             });
                         }
                         buttons_area.prepend(button);
@@ -554,6 +532,7 @@ window.dialog = {
             box.find('.' + clazz.footer).remove();
         }
 
+        box.hide();
         $(doc.body).append(box);
         !options.overlay && !options.shadow && options.iframe && (box.bgiframe());
 
@@ -564,6 +543,7 @@ window.dialog = {
             self.resize(guid);
         }, 50);
 
+        box.show();
         this.dragable(guid);
 
         isFunction(open) && open(box);
@@ -659,28 +639,27 @@ window.dialog = {
         width = content.width();
         height = content.height();
 
-        if (width < options.minWidth) {
-            width = options.minWidth;
+        if (width < options.width || width < options.minWidth) {
+            width = max(options.width, options.minWidth);
             content.width(width);
         }
         
         height += cheight;
 
         box.data('overlay') && this.getOverlay(guid).css({
-            width: pageWidth,
             height: pageHeight
         });
         box.css({
             width: width,
             height: height,
             left: max(SHADOW_PADDING, Math.floor((documentWidth - width) / 2)),
-            top: max(SHADOW_PADDING, Math.floor(max(documentHeight - height, 0) / 2))
+            top: (msie6 ? $(doc).scrollTop() : 0) + max(SHADOW_PADDING, Math.floor(max(documentHeight - height, 0) / 2))
         });
         box.data('shadow') && this.getShadow(guid).css({
             width: width + osize,
             height: height + osize,
             left: max(0, Math.floor((documentWidth - width) / 2 - SHADOW_PADDING)),
-            top: max(0, Math.floor(max(documentHeight - height, 0) / 2 - SHADOW_PADDING))
+            top: (msie6 ? $(doc).scrollTop() : 0) + max(0, Math.floor(max(documentHeight - height, 0) / 2 - SHADOW_PADDING))
         });
         box.data('resizing', false);
         
@@ -690,27 +669,13 @@ window.dialog = {
         var self = this, box = this.get(guid),
             header = box.find('.' + this._clazz.header),
             xOffset = SHADOW_PADDING + BOX_BORDER_WIDTH,
-            yOffset = xOffset;
-
-        function fixFastMove(e) {
-            var box = $('.' + 'dialog-moving'), data, left, top;
-            if (box.size()) {
-                data = box.data('dialog-moving');
-                left = data.startLeft + e.clientX - data.startX;
-                top = data.startTop + e.clientY - data.startY;
-                left = max(0, min(pageWidth - data.elem.width(), left));
-                top = max(0, min(pageHeight - data.elem.height(), top));
-                data.shadow && (data.shadow.css({left: left, top: top}), left += xOffset, top += yOffset);
-                box.css({left: left, top: top});
-            }
-            e.preventDefault();
-            e.stopPropagation();
-        }
+            yOffset = xOffset,
+            draging;
 
         (function(box, header) {
-            var draging = false,
-                startLeft, startTop, startX, startY,
+            var startLeft, startTop, startX, startY,
                 shadow = self.getShadow(guid), elem = shadow.size() ? shadow : box;
+            draging = false;
             header.bind('mousedown.dragment', function(e) {
                 draging && header.trigger('mouseup.dragment');
                 draging = true;
@@ -719,29 +684,21 @@ window.dialog = {
                 startTop = offset.top;
                 startX = e.pageX;
                 startY = e.pageY;
-                box.addClass('dialog-moving');
-                box.data('dialog-moving', {
-                    startLeft: startLeft, startTop: startTop, startX: startX, startY: startY, elem: elem, shadow: shadow
-                });
-                $(doc).bind('mousemove.dragment', fixFastMove).bind('selectstart.dragment', function() {return false;});
-                $(doc.body).css('-moz-user-select', 'none');
-            });
-            header.bind('mousemove.dragment', function(e) {
+                $('.' + self._clazz.box).css('MozUserSelect', 'none');
+            }).css('cursor', 'move');
+            $(doc).bind('mousemove.dragment', function(e) {
                 if (!draging) return false;
-                var left = startLeft + e.pageX - startX, top = startTop + e.pageY - startY;
+                var left = startLeft + e.clientX - startX, top = startTop + e.clientY - startY;
                 left = max(0, min(pageWidth - elem.width(), left));
-                top = max(0, min(pageHeight - elem.height(), top));
+                top = (msie6 ? $(doc).scrollTop() : 0) + max(0, min(pageHeight - elem.height(), top));
                 shadow.size() && (shadow.css({left: left, top: top}), left += xOffset, top += yOffset);
                 box.css({left: left, top: top});
-                e.preventDefault();
-            });
-            header.bind('mouseup.dragment', function() {
-                box.removeClass('dialog-moving');
-                box.removeData('dialog-moving');
+            }).bind('selectstart.dragment', function() {return false;});
+            $(doc).bind('mouseup.dragment', function() {
                 $.event.remove('.dragment');
-                $(doc.body).css('-moz-user-select', '');
+                $('.' + self._clazz.box).css('MozUserSelect', '');
                 draging = false;
-            }).css('cursor', 'move');
+            });
         })(box, header);
     }
 };
