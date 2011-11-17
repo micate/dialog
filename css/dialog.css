@@ -13,11 +13,13 @@
 .dialog-box .dialog-content, .dialog-box .dialog-content p {white-space:pre-wrap; word-wrap:break-word; word-break:break-all;}
 .dialog-confirm .dialog-content {background-color:#FFC;}
 .dialog-error .dialog-header, .dialog-error .dialog-content {color:#C00;}
-.dialog-box .dialog-button {float:right; margin-left:5px; display:-moz-inline-box; display:inline-block; border-width:1px; border-style:solid; border-color:#bbb #bbb #999; *display:inline; *zoom:1; color:#444; -moz-border-radius:3px; -webkit-border-radius:3px; border-radius:3px; overflow:hidden; vertical-align:middle;}
+.dialog-box .dialog-button {float:right; margin-left:5px; display:-moz-inline-box; display:inline-block; border-width:1px; _border:0; border-style:solid; border-color:#bbb #bbb #999; *display:inline; *zoom:1; color:#444; -moz-border-radius:3px; -webkit-border-radius:3px; border-radius:3px; overflow:hidden; vertical-align:middle;}
 .dialog-box .dialog-button:hover {border-color:#999 #999 #666; color:#333; }
 .dialog-box .dialog-button input {float:left; text-align:center; border:none; height:25px; margin:0 !important; padding:0 14px; color:#333; background:transparent url(images/dialog-button.png) repeat-x 0 0\9; font-size:12px; *padding:3px 8px 0; cursor:pointer; -webkit-appearance:none; -moz-border-radius:2px; -webkit-border-radius:2px; border-radius:2px; background-image:-moz-linear-gradient(-90deg, #fcfcfc 0, #e9e9e9 100%); background-image:-webkit-gradient(linear,left top,left bottom, color-stop(0, #fcfcfc), color-stop(1, #e9e9e9));}
+.dialog-box .dialog-button input {_border-width:1px; _border-style:solid; _border-color:#bbb #bbb #999;}
 .dialog-box .dialog-button input:hover,
 .dialog-box .dialog-button-over input{color:#333 !important; background-color:transparent !important; background-position:1px -6px\9; background-image:-moz-linear-gradient(-90deg, #f8f8f8 0, #ddd 100%); background-image:-webkit-gradient(linear,left top,left bottom, color-stop(0, #f8f8f8), color-stop(1, #ddd));}
+.dialog-box .dialog-button-over input{_border-color:#999 #999 #666; _color:#333;}
 .dialog-box .dialog-button input:active,
 .dialog-box .dialog-button-active input{background:#ddd !important; color:#333 !important; border-color:#999 #999 #666 !important;}
 @media all and (-webkit-min-device-pixel-ratio:10000),not all and (-webkit-min-device-pixel-ratio:0){

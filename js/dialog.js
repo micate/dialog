@@ -20,6 +20,7 @@ var LANG = {
         errorMessage: LANG.ERROR,
         overlay: true,
         shadow: true,
+        draggable: true,
         iframe: true,
         minWidth: 200,
         minHeight: 60,
@@ -169,7 +170,7 @@ function isFunction(func, context) {
     return null;
 }
 function createIframe(src) {
-    return $(['<iframe src="', src || BLANK_SRC, '" frameborder="0" scrolling="no" style="width:100%; height:100%; border:0; margin:0; padding:0;"></iframe>'].join(''));
+    return $(['<iframe src="', src || BLANK_SRC, '" frameborder="0" scrolling="auto" style="width:100%; height:100%; border:0; margin:0; padding:0;"></iframe>'].join(''));
 }
 function createOverlay(options, clazz) {
     var overlay =  $(['<div id="', PREFIX, 'overlay_', GUID, '" class="', clazz.overlay, '"></div>'].join(''));
@@ -178,7 +179,7 @@ function createOverlay(options, clazz) {
 }
 function createShadow(options, clazz) {
     var shadow = $(['<div id="', PREFIX, 'shadow_', GUID, '" class="', clazz.shadow, '"></div>'].join(''));
-    shadow.css({'z-index': ZINDEX, 'opacity': SHADOW_OPACITY});
+    shadow.css({'opacity': SHADOW_OPACITY, 'z-index': ZINDEX,  'left': '-9999em', 'top': '-9999em'});
     return shadow;
 }
 function createBox(options, clazz) {
@@ -194,7 +195,7 @@ function createBox(options, clazz) {
                 '</div>',
             '</div>'
         ].join(''));
-    box.css({'z-index': ZINDEX});
+    box.css({'z-index': ZINDEX, 'left': '-9999em', 'top': '-9999em'});
     if (message && message.jquery) {
         content = box.find('.' + clazz.content);
         content.empty();
@@ -492,8 +493,8 @@ window.dialog = {
         }
         options = $.extend({}, CONFIG, options);
 
-        guid = ++GUID;
         ZINDEX++;
+        guid = ++GUID;
 
         box = createBox(options, clazz);
         box.data('options', options);
@@ -501,13 +502,13 @@ window.dialog = {
         if (options.overlay) {
             overlay = createOverlay(options, clazz);
             box.data('overlay', options.overlay);
-            $(doc.body).append(overlay);
+            $('body').append(overlay);
             options.iframe && overlay.bgiframe();
         }
         if (options.shadow) {
             shadow = createShadow(options, clazz);
             box.data('shadow', options.shadow);
-            $(doc.body).append(shadow);
+            $('body').append(shadow);
             !options.overlay && options.iframe && (shadow.bgiframe());
         }
 
@@ -532,8 +533,8 @@ window.dialog = {
             box.find('.' + clazz.footer).remove();
         }
 
-        box.hide();
-        $(doc.body).append(box);
+        $('body').append(box);
+
         !options.overlay && !options.shadow && options.iframe && (box.bgiframe());
 
         $(window).resize(function() {
@@ -543,16 +544,19 @@ window.dialog = {
             self.resize(guid);
         }, 50);
 
-        box.show();
-        this.dragable(guid);
+        options.draggable && this.dragable(guid);
 
         isFunction(open) && open(box);
         isFunction(close) && box.data('close', close);
-        box.find('.' + clazz.close).click(function() {
+        box.find('.' + clazz.close).click(function(e) {
             self.close(guid);
+            e.stopPropagation();
+            e.preventDefault();
             return false;
         });
 
+        options.shadow && shadow.show();
+        box.show();
         return guid;
     },
     get: function(guid) {
@@ -617,7 +621,7 @@ window.dialog = {
 
         noneContentHeight = box.css({
             height: 'auto',
-            width: options.width
+            width: options.width || 'auto'
         }).height();
         minContentHeight = max(0, options.minHeight - noneContentHeight);
         if (options.height === 'auto' || !options.height) {
@@ -640,8 +644,7 @@ window.dialog = {
         height = content.height();
 
         if (width < options.width || width < options.minWidth) {
-            width = max(options.width, options.minWidth);
-            content.width(width);
+            width = max(options.width || 0, options.minWidth || 0);
         }
         
         height += cheight;
@@ -654,6 +657,9 @@ window.dialog = {
             height: height,
             left: max(SHADOW_PADDING, Math.floor((documentWidth - width) / 2)),
             top: (msie6 ? $(doc).scrollTop() : 0) + max(SHADOW_PADDING, Math.floor(max(documentHeight - height, 0) / 2))
+        });
+        content.css({
+            width: width
         });
         box.data('shadow') && this.getShadow(guid).css({
             width: width + osize,
@@ -677,7 +683,7 @@ window.dialog = {
                 shadow = self.getShadow(guid), elem = shadow.size() ? shadow : box;
             draging = false;
             header.bind('mousedown.dragment', function(e) {
-                draging && header.trigger('mouseup.dragment');
+                draging && $(doc).trigger('mouseup.dragment');
                 draging = true;
                 var offset = elem.position();
                 startLeft = offset.left;
@@ -685,20 +691,21 @@ window.dialog = {
                 startX = e.pageX;
                 startY = e.pageY;
                 $('.' + self._clazz.box).css('MozUserSelect', 'none');
+
+                $(doc).bind('mousemove.dragment', function(e) {
+                    if (!draging) return false;
+                    var left = startLeft + e.clientX - startX, top = startTop + e.clientY - startY;
+                    left = max(0, min(pageWidth - elem.width(), left));
+                    top = (msie6 ? $(doc).scrollTop() : 0) + max(0, min(pageHeight - elem.height(), top));
+                    shadow.size() && (shadow.css({left: left, top: top}), left += xOffset, top += yOffset);
+                    box.css({left: left, top: top});
+                }).bind('selectstart.dragment', function() {return false;});
+                $(doc).bind('mouseup.dragment', function() {
+                    $(doc).unbind('.dragment');
+                    $('.' + self._clazz.box).css('MozUserSelect', '');
+                    draging = false;
+                });
             }).css('cursor', 'move');
-            $(doc).bind('mousemove.dragment', function(e) {
-                if (!draging) return false;
-                var left = startLeft + e.clientX - startX, top = startTop + e.clientY - startY;
-                left = max(0, min(pageWidth - elem.width(), left));
-                top = (msie6 ? $(doc).scrollTop() : 0) + max(0, min(pageHeight - elem.height(), top));
-                shadow.size() && (shadow.css({left: left, top: top}), left += xOffset, top += yOffset);
-                box.css({left: left, top: top});
-            }).bind('selectstart.dragment', function() {return false;});
-            $(doc).bind('mouseup.dragment', function() {
-                $.event.remove('.dragment');
-                $('.' + self._clazz.box).css('MozUserSelect', '');
-                draging = false;
-            });
         })(box, header);
     }
 };
