@@ -46,9 +46,12 @@ var LANG = {
         button_hover: 'dialog-button-over',
         button_focus: 'dialog-button-active'
     },
+    TEMPLATE = {
+        button: '<span class="{clazz}"><input type="button" value="{value}" /></span>'
+    },
     GUID = 0,
     PREFIX = 'dialog_',
-    ZINDEX = 1000,
+    ZINDEX = 1000000,
     OPACITY = 0.8,
     SHADOW_OPACITY = 0.2,
     UNIT_PX = 'px',
@@ -169,6 +172,20 @@ function isFunction(func, context) {
     }
     return null;
 }
+function removeBlankLines(elem) {
+    if (!elem) return;
+    var html = elem.jquery ? elem.html() : elem;
+    html = html.replace(/(?:\n|\r\n|\s{2,})/gim, '');
+    elem.jquery && (elem.html(html));
+    return html;
+}
+function fromTemplate(template, params) {
+    template = TEMPLATE[template] || '';
+    for (var key in params) {
+        template = template.replace(new RegExp('{'+key+'}',"gm"), params[key] || '');
+    }
+    return template;
+}
 function createIframe(src) {
     return $(['<iframe src="', src || BLANK_SRC, '" frameborder="0" scrolling="auto" style="width:100%; height:100%; border:0; margin:0; padding:0;"></iframe>'].join(''));
 }
@@ -187,7 +204,7 @@ function createBox(options, clazz) {
         content,
         box = $([
             '<div id="', PREFIX, 'box_', GUID, '" class="', clazz.box, options.dialogClass ? ' ' + options.dialogClass : '', '">',
-                '<div class="', clazz.header, '"><a href="javascript:void(0);" hideFocus="true" title="', LANG.CLOSE, '" class="', clazz.close, '">X</a><span class="', clazz.title, '">', options.title, '</span></div>',
+                '<div class="', clazz.header, '"><a href="javascript:void(0);" hideFocus="true" title="', LANG.CLOSE, '" class="', clazz.close, '">✖</a><span class="', clazz.title, '">', options.title, '</span></div>',
                 '<div class="', clazz.content, '"><div class="', clazz.content_box, '">', message && !message.jquery ? message : '', '</div></div>',
                 '<div class="', clazz.footer, '">',
                     '<div class="', clazz.widget, '"></div>',
@@ -204,7 +221,7 @@ function createBox(options, clazz) {
     return box;
 }
 function createButton(option, clazz) {
-    var button = $(['<span class="', clazz.button, '"><input type="button" value="', option.text, '" /></span>'].join(''));
+    var button = $(fromTemplate('button', {clazz: clazz.button, value: option.text}));
     button.hover(function() {
         $(this).addClass(clazz.button_hover);
     }, function() {
@@ -255,9 +272,10 @@ window.dialog = {
             }
         };
     },
-    setup: function(options, clazz) {
+    setup: function(options, clazz, template) {
         $.extend(CONFIG, options || {});
         $.extend(this._clazz, clazz || {});
+        $.extend(TEMPLATE, template || {});
         options.locale && (LANG = options.locale);
         return this;
     },
@@ -406,6 +424,7 @@ window.dialog = {
             box.find('.' + self._clazz.buttons + ' :button').removeAttr('disabled');
         }
         div.load(url, function() {
+            removeBlankLines(div);
             callback();
         }).bind('ajaxComplete', function() {
             callback(true);
@@ -525,7 +544,7 @@ window.dialog = {
                                 option.callback(guid, box);
                             });
                         }
-                        buttons_area.prepend(button);
+                        buttons_area.append(button);
                     })(buttons[index]);
                 }
             }
@@ -615,13 +634,21 @@ window.dialog = {
             height: 0
         });
 
-        if (options.minWidth > options.width) {
+        if (options.width < options.minWidth) {
             options.width = options.minWidth;
+        }
+
+        if (content.width() < options.width) {
+            content.width(options.width);
+        }
+
+        if (options.maxWidth && content.width() > options.maxWidth) {
+            content.width(options.maxWidth);
         }
 
         noneContentHeight = box.css({
             height: 'auto',
-            width: options.width || 'auto'
+            width: (min(options.width, options.maxWidth)) || 'auto'
         }).height();
         minContentHeight = max(0, options.minHeight - noneContentHeight);
         if (options.height === 'auto' || !options.height) {
@@ -645,6 +672,10 @@ window.dialog = {
 
         if (width < options.width || width < options.minWidth) {
             width = max(options.width || 0, options.minWidth || 0);
+        }
+
+        if (options.maxWidth && width > options.maxWidth) {
+            width = options.maxWidth;
         }
         
         height += cheight;
