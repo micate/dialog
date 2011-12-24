@@ -172,13 +172,6 @@ function isFunction(func, context) {
     }
     return null;
 }
-function removeBlankLines(elem) {
-    if (!elem) return;
-    var html = elem.jquery ? elem.html() : elem;
-    html = html.replace(/(?:\n|\r\n|\s{2,})/gim, '');
-    elem.jquery && (elem.html(html));
-    return html;
-}
 function fromTemplate(template, params) {
     template = TEMPLATE[template] || '';
     for (var key in params) {
@@ -424,7 +417,6 @@ window.dialog = {
             box.find('.' + self._clazz.buttons + ' :button').removeAttr('disabled');
         }
         div.load(url, function() {
-            removeBlankLines(div);
             callback();
         }).bind('ajaxComplete', function() {
             callback(true);
@@ -612,9 +604,9 @@ window.dialog = {
             overlay, shadow, content, isVisible,
             width, height, osize, cheight, noneContentHeight, minContentHeight, autoHeight;
 
-        documentWidth = doe.clientWidth,
-        documentHeight = doe.clientHeight,
-        pageWidth = $(doc).width(),
+        documentWidth = doe.clientWidth;
+        documentHeight = doe.clientHeight;
+        pageWidth = $(doc).width();
         pageHeight = max($(doc).height(), documentHeight);
 
         if (!box.size() || box.data('resizing')) {
@@ -738,6 +730,13 @@ window.dialog = {
                 });
             }).css('cursor', 'move');
         })(box, header);
+    },
+    removeBlankLines: function(elem) {
+        if (!elem) return false;
+        var html = elem.jquery ? elem.html() : elem;
+        html = html.replace(/(?:\n|\r\n|\s{2,})/gim, '');
+        elem.jquery && (elem.html(html));
+        return html;
     }
 };
 })(jQuery, window);
