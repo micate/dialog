@@ -730,13 +730,6 @@ window.dialog = {
                 });
             }).css('cursor', 'move');
         })(box, header);
-    },
-    removeBlankLines: function(elem) {
-        if (!elem) return false;
-        var html = elem.jquery ? elem.html() : elem;
-        html = html.replace(/(?:\n|\r\n|\s{2,})/gim, '');
-        elem.jquery && (elem.html(html));
-        return html;
     }
 };
 })(jQuery, window);
