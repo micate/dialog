@@ -10,7 +10,7 @@
 .dialog-box .dialog-content {font-size:12px; background:#FFF; color:#111; float:left; overflow:hidden;}
 .dialog-box .dialog-content .dialog-content-box, .dialog-box .dialog-content .dialog-tips {padding: 10px 10px 25px;}
 .dialog-box .dialog-content .dialog-content-tips {text-align:center; vertical-align:middle;}
-.dialog-box .dialog-content, .dialog-box .dialog-content p {white-space:pre-wrap; word-wrap:break-word; word-break:break-all;}
+.dialog-box .dialog-content, .dialog-box .dialog-content p {word-wrap:break-word; word-break:break-all;}
 .dialog-confirm .dialog-content {background-color:#FFC;}
 .dialog-error .dialog-header, .dialog-error .dialog-content {color:#C00;}
 .dialog-box .dialog-button {float:right; margin-left:5px; display:-moz-inline-box; display:inline-block; border-width:1px; _border:0; border-style:solid; border-color:#bbb #bbb #999; *display:inline; *zoom:1; color:#444; -moz-border-radius:3px; -webkit-border-radius:3px; border-radius:3px; overflow:hidden; vertical-align:middle;}
