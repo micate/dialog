@@ -379,7 +379,6 @@ window.dialog = {
                     if (form.size()) {
                         form.ajaxSubmit({
                             dataType: 'json',
-                            type: 'post',
                             success: callback,
                             error: function(XMLHttpRequest, textStatus, errorThrown) {
                                 if (isFunction(error)) {
