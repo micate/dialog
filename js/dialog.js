@@ -51,7 +51,7 @@ var LANG = {
     },
     GUID = 0,
     PREFIX = 'dialog_',
-    ZINDEX = 1000000,
+    ZINDEX = 1000,
     OPACITY = 0.8,
     SHADOW_OPACITY = 0.2,
     UNIT_PX = 'px',
