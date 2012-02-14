@@ -1,8 +1,8 @@
 /**
  * a douban.com like jQuery dialog for common usage
  *
- * @author	micate<root@micate.me>
- * @version	$Id$
+ * @author  micate<root@micate.me>
+ * @version $Id$
  * @depends jquery 1.3.2+
  */
 (function($, window, undefined) {
@@ -193,23 +193,18 @@ function createShadow(options, clazz) {
     return shadow;
 }
 function createBox(options, clazz) {
-    var message = options.message,
-        content,
-        box = $([
-            '<div id="', PREFIX, 'box_', GUID, '" class="', clazz.box, options.dialogClass ? ' ' + options.dialogClass : '', '">',
-                '<div class="', clazz.header, '"><a href="javascript:void(0);" hideFocus="true" title="', LANG.CLOSE, '" class="', clazz.close, '">✖</a><span class="', clazz.title, '">', options.title, '</span></div>',
-                '<div class="', clazz.content, '"><div class="', clazz.content_box, '">', message && !message.jquery ? message : '', '</div></div>',
-                '<div class="', clazz.footer, '">',
-                    '<div class="', clazz.widget, '"></div>',
-                    '<div class="', clazz.buttons, '"></div>',
-                '</div>',
-            '</div>'
-        ].join(''));
+    var message = options.message, content, box;
+    box = ['<div id="', PREFIX, 'box_', GUID, '" class="', clazz.box, options.dialogClass ? ' ' + options.dialogClass : '', '">'];
+    options.title !== false && box.push('<div class="', clazz.header, '"><a href="javascript:void(0);" hideFocus="true" title="', LANG.CLOSE, '" class="', clazz.close, '">✖</a><span class="', clazz.title, '">', options.title, '</span></div>');
+    box.push('<div class="', clazz.content, '"><div class="', clazz.content_box, '">', message && !message.jquery ? message : '', '</div></div>');
+    options.buttons && box.push('<div class="', clazz.footer, '">', '<div class="', clazz.widget, '"></div>', '<div class="', clazz.buttons, '"></div>', '</div>');
+    box.push('</div>');
+    box = $(box.join(''));
     box.css({'z-index': ZINDEX, 'left': '-9999em', 'top': '-9999em'});
     if (message && message.jquery) {
         content = box.find('.' + clazz.content);
         content.empty();
-        content.append(message);
+        content.append(message.clone(true).show());
     }
     return box;
 }
@@ -238,6 +233,9 @@ function createTips(options, clazz) {
         tips.addClass(clazz.content_box);
     }
     return tips;
+}
+function generateDefaultButtons(options) {
+    return options.buttons !== false && !options.buttons;
 }
 
 window.dialog = {
@@ -275,7 +273,7 @@ window.dialog = {
     ok: function(options, ok, close) {
         var self = this;
         options = this._common(options);
-        if (!options.buttons) {
+        if (generateDefaultButtons(options)) {
             options.buttons = [self._button(LANG.OK, ok)];
         }
         if (!options.dialogClass) {
@@ -286,7 +284,7 @@ window.dialog = {
     error: function(options, ok) {
         var self = this;
         options = this._common(options);
-        if (!options.buttons) {
+        if (generateDefaultButtons(options)) {
             options.buttons = [self._button(LANG.OK, ok)];
         }
         if (!options.dialogClass) {
@@ -297,7 +295,7 @@ window.dialog = {
     confirm: function(options, ok, cancel) {
         var self = this;
         options = this._common(options);
-        if (!options.buttons) {
+        if (generateDefaultButtons(options)) {
             options.buttons = [self._button(LANG.OK, ok), self._button(LANG.CANCEL, cancel)];
         }
         if (!options.dialogClass) {
@@ -349,15 +347,15 @@ window.dialog = {
         var self = this, div, guid;
 
         if (!options) {
-            throw 'dialog.form need title';
+            throw 'dialog.form need options';
         }
-        if (typeof options == TYPE_STRING) {
+        if (typeof options == TYPE_STRING && url) {
             options = {
                 title: options
             };
         }
 
-        if (!options.buttons) {
+        if (generateDefaultButtons(options)) {
             options.buttons = [{
                 text: LANG.OK,
                 callback: function(guid) {
@@ -503,7 +501,7 @@ window.dialog = {
         }
         options = $.extend({}, CONFIG, options);
 
-        ZINDEX++;
+        ++ZINDEX;
         guid = ++GUID;
 
         box = createBox(options, clazz);
@@ -522,25 +520,21 @@ window.dialog = {
             !options.overlay && options.iframe && (shadow.bgiframe());
         }
 
-        if (options.buttons || options.widget) {
-            buttons = options.buttons;
-            buttons_area = box.find('.' + clazz.buttons);
-            if (buttons && buttons.length) {
-                var button, index, length = buttons.length, option;
-                for (index = 0; index < length; index++) {
-                    (function(option) {
-                        button = createButton(option, clazz);
-                        if (isFunction(option.callback)) {
-                            button.click(function() {
-                                option.callback(guid, box);
-                            });
-                        }
-                        buttons_area.append(button);
-                    })(buttons[index]);
-                }
+        buttons = options.buttons;
+        buttons_area = box.find('.' + clazz.buttons);
+        if (buttons && buttons.length) {
+            var button, index, length = buttons.length, option;
+            for (index = 0; index < length; index++) {
+                (function(option) {
+                    button = createButton(option, clazz);
+                    if (isFunction(option.callback)) {
+                        button.click(function() {
+                            option.callback(guid, box);
+                        });
+                    }
+                    buttons_area.append(button);
+                })(buttons[index]);
             }
-        } else {
-            box.find('.' + clazz.footer).remove();
         }
 
         $('body').append(box);
@@ -560,8 +554,6 @@ window.dialog = {
         isFunction(close) && box.data('close', close);
         box.find('.' + clazz.close).click(function(e) {
             self.close(guid);
-            e.stopPropagation();
-            e.preventDefault();
             return false;
         });
 
@@ -618,59 +610,49 @@ window.dialog = {
         osize = 2 * SHADOW_PADDING + 2 * BOX_BORDER_WIDTH;
         cheight = box.find('.' + CLASS.header).outerHeight(true) + box.find('.' + CLASS.footer).outerHeight(true);
         content = box.find('.' + CLASS.content);
-
         content.css({
             width: 'auto',
             minHeight: 0,
             height: 0
         });
-
         if (options.width < options.minWidth) {
             options.width = options.minWidth;
         }
-
         if (content.width() < options.width) {
             content.width(options.width);
         }
-
         if (options.maxWidth && content.width() > options.maxWidth) {
             content.width(options.maxWidth);
         }
-
         noneContentHeight = box.css({
             height: 'auto',
             width: (min(options.width, options.maxWidth)) || 'auto'
         }).height();
         minContentHeight = max(0, options.minHeight - noneContentHeight);
         if (options.height === 'auto' || !options.height) {
-			if ($.support.minHeight) {
-				content.css({
-					minHeight: minContentHeight,
-					height: 'auto'
-				});
-			} else {
-				box.show();
-				autoHeight = content.css('height', 'auto').height();
-				!isVisible && box.hide();
-				content.height(max(autoHeight, minContentHeight));
-			}
-		} else {
-			content.height(max(options.height - noneContentHeight, 0));
-		}
-
+            if ($.support.minHeight) {
+                content.css({
+                    minHeight: minContentHeight,
+                    height: 'auto'
+                });
+            } else {
+                box.show();
+                autoHeight = content.css('height', 'auto').height();
+                !isVisible && box.hide();
+                content.height(max(autoHeight, minContentHeight));
+            }
+        } else {
+            content.height(max(options.height - noneContentHeight, 0));
+        }
         width = content.width();
         height = content.height();
-
         if (width < options.width || width < options.minWidth) {
             width = max(options.width || 0, options.minWidth || 0);
         }
-
         if (options.maxWidth && width > options.maxWidth) {
             width = options.maxWidth;
         }
-        
         height += cheight;
-
         box.data('overlay') && this.getOverlay(guid).css({
             height: pageHeight
         });
