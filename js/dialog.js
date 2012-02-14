@@ -204,7 +204,8 @@ function createBox(options, clazz) {
     if (message && message.jquery) {
         content = box.find('.' + clazz.content);
         content.empty();
-        content.append(message.clone(true).show());
+        var clone = message.clone(true).show();
+        content.append((message.parents('body').size() ? message.clone(true) : message).show());
     }
     return box;
 }
@@ -263,6 +264,21 @@ window.dialog = {
             }
         };
     },
+    _normalizeUrl: function(url) {
+        var location = document.location, 
+            href = location.href;
+        if (url && url.indexOf('://') === -1) {
+            if (url[0] == '/') {
+                url = href.substr(0, href.indexOf(location.pathname)) + url;
+            } else {
+                if (href.indexOf('?') > -1) {
+                    href = href.substr(0, href.indexOf('?'));    
+                }
+                url = href.substr(0, href.lastIndexOf('/')) + '/' + url;
+            }
+        }
+        return url;
+    }, 
     setup: function(options, clazz, template) {
         $.extend(CONFIG, options || {});
         $.extend(this._clazz, clazz || {});
@@ -346,61 +362,58 @@ window.dialog = {
     form: function(options, url, submit, load, error, beforeSubmit, beforeSerialize, cancel) {
         var self = this, div, guid;
 
-        if (!options) {
-            throw 'dialog.form need options';
+        if (!options || !url) {
+            throw 'dialog.form need options and url';
         }
         if (typeof options == TYPE_STRING && url) {
             options = {
                 title: options
             };
         }
+        function submitForm(guid) {
+            var box = self.get(guid),
+                form = box.find('form:last'),
+                buttons = box.find('.' + self._clazz.buttons + ' :button'),
+                callback = function(json) {
+                    if (isFunction(submit) && submit(json) === false) {
+                        return false;
+                    }
+                    self.close(guid, true);
+                }, 
+                complete = function() {
+                    buttons.removeAttr('disabled');
+                };
+            if (form.size()) {
+                form.ajaxSubmit({
+                    dataType: 'json',
+                    success: callback,
+                    error: function(XMLHttpRequest, textStatus, errorThrown) {
+                        if (isFunction(error)) {
+                            error(XMLHttpRequest, textStatus, errorThrown);
+                        } else {
+                            self.error(options.errorMessage);
+                        }
+                    },
+                    complete: complete,
+                    beforeSubmit: function() {
+                        buttons.attr('disabled', 'disabled');
+                        if (isFunction(beforeSubmit) && beforeSubmit(form, guid) === false) {
+                            complete();
+                            return false;
+                        }
+                        return true;
+                    },
+                    beforeSerialize: beforeSerialize
+                });
+                return false;
+            }
+            callback(box);
+        }
 
         if (generateDefaultButtons(options)) {
             options.buttons = [{
                 text: LANG.OK,
-                callback: function(guid) {
-                    var box = self.get(guid),
-                        form = box.find('form:last'),
-                        buttons = box.find('.' + self._clazz.buttons + ' :button'),
-                        callback, complete;
-
-                    callback = function(json) {
-                        if (isFunction(submit) && submit(json) === false) {
-                            return false;
-                        }
-                        self.close(guid, true);
-                    };
-                    complete = function() {
-                        buttons.removeAttr('disabled');
-                    };
-
-                    if (form.size()) {
-                        form.ajaxSubmit({
-                            dataType: 'json',
-                            success: callback,
-                            error: function(XMLHttpRequest, textStatus, errorThrown) {
-                                if (isFunction(error)) {
-                                    error(XMLHttpRequest, textStatus, errorThrown);
-                                } else {
-                                    self.error(options.errorMessage);
-                                }
-                            },
-                            complete: complete,
-                            beforeSubmit: function() {
-                                buttons.attr('disabled', 'disabled');
-                                if (isFunction(beforeSubmit) && beforeSubmit(form, guid) === false) {
-                                    complete();
-                                    return false;
-                                }
-                                return true;
-                            },
-                            beforeSerialize: beforeSerialize
-                        });
-                        return false;
-                    }
-                    
-                    callback(box);
-                }
+                callback: submitForm
             }, self._button(LANG.CANCEL, cancel)];
         }
 
@@ -413,12 +426,20 @@ window.dialog = {
             self.resize(guid);
             box.find('.' + self._clazz.buttons + ' :button').removeAttr('disabled');
         }
-        div.load(url, function() {
+        div.load(this._normalizeUrl(url), function() {
             callback();
+            div.find(':input').keyup(function(e) {
+                if (e.keyCode == 13) {
+                    submitForm(guid);
+                    return false;
+                }
+            });
+            div.find('form:last').submit(function() {
+                return false;
+            });
         }).bind('ajaxComplete', function() {
             callback(true);
         });
-
         options.message = div;
         guid = this.dialog(options, function(box) {
             box.find('.' + self._clazz.buttons + ' :button').attr('disabled', 'disabled');
@@ -524,7 +545,7 @@ window.dialog = {
         buttons_area = box.find('.' + clazz.buttons);
         if (buttons && buttons.length) {
             var button, index, length = buttons.length, option;
-            for (index = 0; index < length; index++) {
+            for (index = length - 1; index >= 0; index--) {
                 (function(option) {
                     button = createButton(option, clazz);
                     if (isFunction(option.callback)) {
