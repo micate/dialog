@@ -242,14 +242,8 @@ function generateDefaultButtons(options) {
 window.dialog = {
     _clazz: CLASS,
     _common: function(options) {
-        if (!options) {
-            throw 'dialog need message or callback';
-        }
-        if (options.jquery || typeof options == TYPE_STRING) {
-            options = {
-                message: options
-            };
-        }
+        ! options && (options = {message: ''});
+        (options.jquery || typeof options == TYPE_STRING) && (options = {message: options});
         return options;
     },
     _button: function(text, func) {
@@ -607,9 +601,7 @@ window.dialog = {
         if (box.data('shadow')) {
             this.getShadow(guid).remove();
         }
-        setTimeout(function() {
-            box.remove();
-        }, 50);
+        box.remove();
         return true;
     },
     resize: function(guid) {
