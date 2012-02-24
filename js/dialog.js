@@ -427,6 +427,7 @@ window.dialog = {
             box.find('.' + self._clazz.buttons + ' :button').removeAttr('disabled');
         }
         div.load(this._normalizeUrl(url), function() {
+            div.removeClass(self._clazz.content_tips);
             callback();
             div.find(':input').keyup(function(e) {
                 if (e.keyCode == 13) {
