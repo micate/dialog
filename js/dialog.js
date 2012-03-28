@@ -488,6 +488,14 @@ window.dialog = {
                     }, 600);
                     self.resize(guid);
                 }
+                
+                win.getDialog = function() {
+                    return self.get(guid);
+                };
+
+                win.closeDialog = function() {
+                    self.close(guid);
+                };
 
                 callback && (win.dialogCallback = callback);
                 !options.title && doc.title && doc.title.length && (self.get(guid).find('.' + clazz.title).html(doc.title));
