@@ -2,87 +2,191 @@
 <html>
 <head>
     <meta charset="UTF-8" />
-    <title></title>
-    <link rel="stylesheet" href="css/dialog.css" />
-    <script src="js/jquery.js"></script>
-    <script src="js/dialog.js"></script>
-    <script>
-        $(function() {
-            //dialog.setup({width:600/*, height:400*/});
-            dialog.setup({overlay:false/*, minWidth:500*/});
-
-            /*dialog.ok({title:'新提示', message:'hello, worldddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />'}, function() {
-                dialog.tips('callback');
-            });*/
-
-            /*dialog.confirm('确定要刷新页面吗？', function() {
-                dialog.tips('Yes Clicked!');
-            }, function() {
-                dialog.error('No Clicked!');
-            });*/
-
-            // submit, load, error, beforeSubmit, beforeSerialize, close
-            /*dialog.form('form demo', '/html/form.php', function(json) {
-                dialog.tips('form submit');
-                //console.info(json);
-            }, function() {
-                dialog.tips('form load');
-            }, function() {
-                dialog.error('form error');
-            }, function() {
-                dialog.tips('form beforeSubmit');
-            }, function(beforeSerialize) {
-                dialog.tips('form beforeSerialize');
-            }, function() {
-                dialog.tips('form close');
-            });*/
-
-            dialog.button({
-                title: '添加成功',
-                message: '<a href="http://www.baidu.com/" target="_blank">http://www.baidu.com/</a>'
-            }, [{
-                text: '确定',
-                callback: function() {
-                    dialog.tips('hello, world');
-                    return false; // prevent close button dialog(default is close)
-                }
-            }, {
-                text: '取消',
-                callback: function() {
-                    dialog.tips('Orz...');
-                }
-            }]);
-
-            //dialog.show('<img src="http://cn.bing.com/fd/hpk2/TheEx_ZH-CN1218152540.jpg" width="500" />');
-            dialog.show({
-                title: '测试',
-                url: '/html/iframe.html',
-                width:400,
-                height:300
-            }, undefined, undefined, function() {
-                dialog.ok('iframe.html close');
-            });
-            dialog.show({
-                title: '百度',
-                url: 'http://www.baidu.com',
-                width:800,
-                height:500
-            });
-        });
-    </script>
+    <title>dialog 是一个豆瓣风格的 jQuery 对话框，旨在提供一个轻量、简洁的原生对话框替换工具</title>
+    <meta name="description" content="dialog 是一个豆瓣风格的 jQuery 对话框，旨在提供一个轻量、简洁的原生对话框替换工具。" />
+    <meta name="keywords" content="jquery,dialog,javascript,micate,对话框,豆瓣" />
+    <link rel="stylesheet" type="text/css" href="css/dialog.css" />
+    <style type="text/css">
+	* {
+            margin: 0;
+            padding: 0;
+	}
+	body {
+            background: #FFF;
+            font: 12px/162% Arial,Helvetica,sans-serif;
+	}
+	p {
+            margin: 0 0 10px;
+	}
+	img {
+	   border: 0;
+	}
+	.doc {
+	   width: 650px;
+	   margin: 100px auto 50px;
+	}
+    .mod-code pre {
+	   margin: 15px 0;
+	   padding: 5px 5px 5px 10px;
+	   border-left: 5px solid #CCC;
+	   word-wrap: break-word;
+	   white-space: pre-wrap;
+	}
+	.mod-banner {
+	   position: fixed;
+	   z-index: 99998;
+	   _position: absolute;
+	   width: 100%;
+	   height: 55px;
+	   padding-top: 20px;
+	   left: 0;
+	   top: 0;
+	   text-align: center;
+	   background: #333;
+	   color: #FFF;
+	}
+    .mod-banner p {
+        margin-top: 5px;
+    }
+	.doc h2 {
+	   margin-top: 25px;
+	}
+	#fork {
+        position: fixed;
+        _position: absolute;
+        right: 0;
+        top: 0;
+        z-index: 99999;
+    }
+    </style>
 </head>
-<body style="background:#FFF; color:#000; font-size:20em; text-align:center;">
-    <div>
-        h
-        <select>
-            <option>hello</option>
-            <option>hello</option>
-            <option>hello</option>
-            <option>hello</option>
-            <option>hello</option>
-            <option>hello</option>
-        </select>
-        hello, world
+<body>
+<div class="doc">
+    <div class="mod-banner">
+        <h1>dialog</h1>
+        <p>dialog 是一个豆瓣风格的 jQuery 对话框，旨在提供一个轻量、简洁的原生对话框替换工具。</p>
     </div>
+
+    <h2>演示 Demo</h2>
+    <div class="mod-demo">
+        <a href="javascript:;" onclick="dialog.ok('dialog.ok();');">dialog.ok();</a>
+        <a href="javascript:;" onclick="dialog.ok('dialog.ok();');">dialog.ok();</a>
+        <a href="javascript:;" onclick="dialog.ok('dialog.ok();');">dialog.ok();</a>
+        <a href="javascript:;" onclick="dialog.ok('dialog.ok();');">dialog.ok();</a>
+        <a href="javascript:;" onclick="dialog.ok('dialog.ok();');">dialog.ok();</a>
+        <a href="javascript:;" onclick="dialog.ok('dialog.ok();');">dialog.ok();</a>
+        <a href="javascript:;" onclick="dialog.ok('dialog.ok();');">dialog.ok();</a>
+    </div>
+
+    <h2>载入 Init</h2>
+    <div class="mod-code">
+        <pre>
+&lt;link rel="stylesheet" type="text/css" href="css/dialog.css" /&gt;
+&lt;script src="js/jquery.js"&gt;&lt;/script&gt;
+&lt;script src="js/dialog.js"&gt;&lt;/script&gt;
+        </pre>
+    </div>
+
+    <h2>配置 Config</h2>
+    <div class="mod-code">
+        <pre>
+
+        </pre>
+    </div>
+
+    <h2>用法 Usage</h2>
+    <div class="mod-code">
+        <pre>
+$(function() {
+
+//dialog.setup({width:600/*, height:400*/});
+dialog.setup({overlay:false/*, minWidth:500*/});
+
+/*dialog.ok({title:'新提示', message:'hello, worldddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />hello, world<br />'}, function() {
+    dialog.tips('callback');
+});*/
+
+/*dialog.confirm('确定要刷新页面吗？', function() {
+    dialog.tips('Yes Clicked!');
+}, function() {
+    dialog.error('No Clicked!');
+});*/
+
+// submit, load, error, beforeSubmit, beforeSerialize, close
+/*dialog.form('form demo', 'demo/html/form.php', function(json) {
+    dialog.tips('form submit');
+    //console.info(json);
+}, function() {
+    dialog.tips('form load');
+}, function() {
+    dialog.error('form error');
+}, function() {
+    dialog.tips('form beforeSubmit');
+}, function(beforeSerialize) {
+    dialog.tips('form beforeSerialize');
+}, function() {
+    dialog.tips('form close');
+});*/
+
+dialog.button({
+    title: '添加成功',
+    message: '<a href="http://www.baidu.com/" target="_blank">http://www.baidu.com/</a>'
+}, [{
+    text: '确定',
+    callback: function() {
+        dialog.tips('hello, world');
+        return false; // prevent close button dialog(default is close)
+    }
+}, {
+    text: '取消',
+    callback: function() {
+        dialog.tips('Orz...');
+    }
+}]);
+
+//dialog.show('<img src="http://cn.bing.com/fd/hpk2/TheEx_ZH-CN1218152540.jpg" width="500" />');
+dialog.show({
+    title: '测试',
+    url: 'demo/html/iframe.html',
+    width:400,
+    height:300
+}, undefined, undefined, function() {
+    dialog.ok('iframe.html close');
+});
+dialog.show({
+    title: '百度',
+    url: 'http://www.baidu.com',
+    width:800,
+    height:500
+});
+});
+        </pre>
+    </div>
+
+    <h2>下载 Download</h2>
+    <p><br /><a href="https://github.com/micate/dialog">代码托管在 Github 上</a>，<a href="https://github.com/micate/dialog/zipball/master">直接下载</a>。如遇到问题欢迎 <a href="https://github.com/micate/dialog/issues">提交 issue</a>。</p>
+</div>
+<a id="fork" href="https://github.com/micate/dialog">
+    <img src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub">
+</a>
+<script src="js/jquery.js"></script>
+<script src="js/dialog.js"></script>
+
+<!-- /* analytics code begin -->
+<script type="text/javascript">
+var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");
+document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3Ffb8afea1e70c3ca0813914e87535eab8' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount','UA-7715988-5']);
+_gaq.push(['_trackPageview']);
+(function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+</script>
+<!-- analytics code */ -->
 </body>
 </html>

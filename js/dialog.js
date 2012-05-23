@@ -1,7 +1,7 @@
 /**
  * a douban.com like jQuery dialog for common usage
  *
- * @author  micate<root@micate.me>
+ * @author  micate<yawewe@gmail.com>
  * @version $Id$
  * @depends jquery 1.3.2+
  */
@@ -488,7 +488,7 @@ window.dialog = {
                     }, 600);
                     self.resize(guid);
                 }
-                
+
                 win.getDialog = function() {
                     return self.get(guid);
                 };
@@ -716,8 +716,6 @@ window.dialog = {
                 startTop = offset.top;
                 startX = e.pageX;
                 startY = e.pageY;
-                $('.' + self._clazz.box).css('MozUserSelect', 'none');
-
                 $(doc).bind('mousemove.dragment', function(e) {
                     if (!draging) return false;
                     var left = startLeft + e.clientX - startX, top = startTop + e.clientY - startY;
@@ -728,7 +726,6 @@ window.dialog = {
                 }).bind('selectstart.dragment', function() {return false;});
                 $(doc).bind('mouseup.dragment', function() {
                     $(doc).unbind('.dragment');
-                    $('.' + self._clazz.box).css('MozUserSelect', '');
                     draging = false;
                 });
             }).css('cursor', 'move');
